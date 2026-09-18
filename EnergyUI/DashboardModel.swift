@@ -21,6 +21,16 @@ struct MetricCardDef {
     let badge: String
 }
 
+// MARK: - 10 宫格响应式动态卡片数据 (周期切换时动态派生标题与数值)
+struct MetricCardData {
+    let label: String        // 动态标题 (如: 9月行驶里程 / 8月充入电量)
+    let value: String        // 主数值
+    let unit: String         // 单位
+    let subUnit: String?     // 辅助说明
+    let delta: String?       // 变化量 (绿色高亮)
+    let accent: String       // 左侧彩条颜色 key
+}
+
 // MARK: - 单日明细
 struct DailyItem: Identifiable {
     let id = UUID()

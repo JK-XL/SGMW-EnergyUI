@@ -8,12 +8,11 @@ struct MetricGridView: View {
     private var p: V32Palette { V32Palette(scheme) }
 
     var body: some View {
-        VStack(spacing: 0) {
+        let periodInfo = model.currentActivePeriodInfo
+        return VStack(spacing: 0) {
             // 响应式 10 宫格：根据当前选区动态派生标题与数值
-            let cards = model.currentActivePeriodInfo.cards
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(0..<cards.count, id: \.self) { idx in
-                    let card = cards[idx]
+                ForEach(Array(periodInfo.cards.enumerated()), id: \.offset) { _, card in
                     metricCard(card: card)
                 }
             }
@@ -28,7 +27,7 @@ struct MetricGridView: View {
                     .font(.system(size: 10.5, weight: .medium))
                     .foregroundColor(p.textMuted)
                 Spacer()
-                Text(model.currentActivePeriodInfo.subHint)
+                Text(periodInfo.subHint)
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(p.accentCyan)
                     .lineLimit(1)
