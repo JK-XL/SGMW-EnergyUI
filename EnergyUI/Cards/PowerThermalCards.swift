@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - 动力电池与低压电网工况 (1:1 v32 battery-panel: 60px SOC 环 + 紧凑两列零换行)
+// MARK: - 动力电池与低压电网工况 (1:1 v32 battery-panel: 左右分散拉齐到两端 + 零截断)
 struct BatteryPanelView: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var model: DashboardModel
@@ -20,8 +20,9 @@ struct BatteryPanelView: View {
             }
             .padding(.bottom, 12)
 
-            HStack(spacing: 14) {
-                // battery-ring (60px 紧凑光环)
+            // 左右分散排布：环贴左，中间弹性撑开，文字贴右拉齐两端
+            HStack(spacing: 0) {
+                // battery-ring (60px 紧凑光环贴左)
                 ZStack {
                     Circle()
                         .trim(from: 0, to: 1)
@@ -38,13 +39,16 @@ struct BatteryPanelView: View {
                 }
                 .frame(width: 60, height: 60)
 
-                // battery-details (2x2, 标签与数值紧凑对齐，绝不折行截断)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                    detailCell(label: "电池健康度 (SOH)", val: "99 % (极佳)", colorKey: "green")
+                Spacer(minLength: 14)
+
+                // battery-details (2x2 两列拉齐分散到右边，标签零截断)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 8) {
+                    detailCell(label: "健康度 (SOH)", val: "99 % (极佳)", colorKey: "green")
                     detailCell(label: "12V 小电瓶", val: "12.38 V (安全)", colorKey: "green")
                     detailCell(label: "电池平均温度", val: "29 ℃ (正常)", colorKey: "plain")
                     detailCell(label: "温差 (高/低)", val: "29℃/28℃ (1℃)", colorKey: "cyan")
                 }
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(.horizontal, 16)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - 时间舱：今日/昨日/本月/上月/更多▼ + 二级抽屉 (1:1 v32 primary-track + archive-tray)
+// MARK: - 时间舱：今日/昨日/本月/上月/更多▼ + 二级抽屉 + 就地悬浮自选日期浮层 (1:1 原版规范)
 struct TimeCapsuleView: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var model: DashboardModel
@@ -39,6 +39,68 @@ struct TimeCapsuleView: View {
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(p.trayBorder, lineWidth: 1))
                 .transition(.opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.97, anchor: .top)))
             }
+
+            // C2 就地悬浮自选日期浮层 (非整页弹窗，轻巧悬浮就地选择)
+            if model.showDatePicker {
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 4) {
+                            Text("自选出行周期")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(p.accentCyan)
+                            Spacer()
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { model.showDatePicker = false }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(p.textMuted)
+                            }
+                        }
+
+                        HStack(spacing: 6) {
+                            DatePicker("", selection: $model.customStartDate, displayedComponents: [.date])
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                                .environment(\.locale, Locale(identifier: "zh_CN"))
+
+                            Text("至")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(p.textSecondary)
+
+                            DatePicker("", selection: $model.customEndDate, displayedComponents: [.date])
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                                .environment(\.locale, Locale(identifier: "zh_CN"))
+
+                            Spacer()
+
+                            Button {
+                                model.applyCustomDateRange()
+                            } label: {
+                                Text("确定")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Capsule().fill(p.accentCyan))
+                            }
+                        }
+                    }
+                }
+                .padding(10)
+                .margin(top: 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(p.cardBG)
+                        .shadow(color: p.cardShadow, radius: 8, x: 0, y: 4)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(p.accentCyan.opacity(0.4), lineWidth: 1)
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.96, anchor: .top)))
+            }
         }
         .padding(.bottom, 8)
     }
@@ -48,6 +110,7 @@ struct TimeCapsuleView: View {
         let active = model.selectedPeriod == period && model.selectedChartMonth == nil
         return Button {
             model.selectPrimary(period)
+            withAnimation(.easeInOut(duration: 0.2)) { model.showDatePicker = false }
         } label: {
             VStack(spacing: 1) {
                 Text(main)
@@ -68,6 +131,9 @@ struct TimeCapsuleView: View {
     private var expanderCapsule: some View {
         Button {
             model.toggleTray()
+            if !model.isTrayOpen {
+                withAnimation(.easeInOut(duration: 0.2)) { model.showDatePicker = false }
+            }
         } label: {
             VStack(spacing: 1) {
                 Text("更多")
@@ -88,14 +154,17 @@ struct TimeCapsuleView: View {
         .buttonStyle(.plain)
     }
 
-    // 抽屉药丸 (min-height 34, radius 8, 去除生硬括号，自选日期支持图标与原生弹窗)
+    // 抽屉药丸 (min-height 34, radius 8, 自选日期点击原地展开浮动浮层)
     private func archivePill(_ period: PeriodType, main: String, sub: String, isIcon: Bool) -> some View {
         let active = model.selectedPeriod == period
         return Button {
             if period == .custom {
-                model.showDatePicker = true
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    model.showDatePicker.toggle()
+                }
             } else {
                 model.selectArchive(period)
+                withAnimation(.easeInOut(duration: 0.2)) { model.showDatePicker = false }
             }
         } label: {
             VStack(spacing: 1) {

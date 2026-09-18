@@ -110,14 +110,31 @@ struct ChartCardView: View {
             }
             .padding(.bottom, 12)
 
-            // bars (h80 + border-bottom)
+            // bars (上部柱条区)
             HStack(alignment: .bottom, spacing: 0) {
                 ForEach(model.barMonths) { bar in
-                    barColumn(bar)
+                    barPillar(bar)
                 }
             }
-            .frame(height: 80)
-            .overlay(alignment: .bottom) { Divider().opacity(0.6) }
+            .frame(height: 72)
+            .padding(.bottom, 2)
+
+            // C5 标准月度基准分割线 (border-bottom 1:1)
+            Rectangle()
+                .fill(p.cardBorder)
+                .frame(height: 1)
+
+            // 下部月份标签行 (稳稳托在基准线下方，每个月严格对齐)
+            HStack(spacing: 0) {
+                ForEach(model.barMonths) { bar in
+                    let active = model.selectedChartMonth == bar.month
+                    Text(bar.isCurrent ? "9月*" : "\(bar.month)月")
+                        .font(.system(size: 9.5, weight: active ? .bold : .medium))
+                        .foregroundColor(active ? p.accentBlue : (bar.isCurrent ? p.accentGreen : p.textMuted))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.top, 6)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -130,41 +147,33 @@ struct ChartCardView: View {
         .padding(.vertical, 12)
     }
 
-    private func barColumn(_ bar: BarMonth) -> some View {
+    // 单根柱条 (数值 + 填充柱体，点击激活高光)
+    private func barPillar(_ bar: BarMonth) -> some View {
         let active = model.selectedChartMonth == bar.month
-        let barH: CGFloat = bar.heightPercent == 0 ? 3 : max(3, 80 * bar.heightPercent / 100 - 20)
+        let barH: CGFloat = bar.heightPercent == 0 ? 3 : max(3, 72 * bar.heightPercent / 100 - 18)
         return Button {
             model.quickMonth(bar.month)
         } label: {
             VStack(spacing: 0) {
-                // bar-val (9px, 激活放大1.18)
+                // bar-val (9px 数值，激活高亮放大)
                 Text("\(bar.starts)")
                     .font(.system(size: 9, weight: active ? .heavy : .bold))
                     .foregroundColor(active ? p.accentBlue : (bar.isCurrent ? p.accentGreen : p.accentCyan))
-                    .scaleEffect(active ? 1.18 : 1.0)
-                    .padding(.bottom, 3)
+                    .scaleEffect(active ? 1.15 : 1.0)
+                    .padding(.bottom, 2)
 
                 Spacer(minLength: 0)
 
-                // bar-fill (w16, 激活蓝紫渐变+发光)
+                // bar-fill (w16 柱体，激活蓝紫渐变)
                 RoundedRectangle(cornerRadius: 3, style: .continuous)
                     .fill(barFillColor(bar: bar, active: active))
                     .frame(width: 16, height: barH)
                     .shadow(color: active ? p.accentBlue.opacity(0.7) : .clear, radius: 6)
             }
             .frame(maxWidth: .infinity)
-            .padding(.top, 8)
             .contentShape(Rectangle())
-            // bar-lbl
-            .overlay(alignment: .bottom) {
-                Text(bar.isCurrent ? "9月*" : "\(bar.month)月")
-                    .font(.system(size: 9, weight: active ? .bold : .regular))
-                    .foregroundColor(active ? p.accentBlue : (bar.isCurrent ? p.textPrimary : p.textMuted))
-                    .offset(y: 13)
-            }
         }
         .buttonStyle(PressScaleStyle(scale: 0.95))
-        .padding(.bottom, 8)
     }
 
     private func barFillColor(bar: BarMonth, active: Bool) -> AnyShapeStyle {

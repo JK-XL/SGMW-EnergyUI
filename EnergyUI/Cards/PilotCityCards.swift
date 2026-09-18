@@ -125,33 +125,27 @@ struct CityFootprintView: View {
             }
             .padding(.bottom, 7)
 
-            // city-tags-flow (9.5px 标签, flex-wrap 4+4 两行 1:1)
-            VStack(spacing: 4) {
-                ForEach(0..<2, id: \.self) { rowIdx in
-                    HStack(spacing: 4) {
-                        ForEach(0..<4, id: \.self) { colIdx in
-                            let idx = rowIdx * 4 + colIdx
-                            if idx < model.cityTags.count {
-                                let tag = model.cityTags[idx]
-                                HStack(spacing: 3) {
-                                    Circle().fill(p.accentBlue).frame(width: 4, height: 4)
-                                    Text(tag.0)
-                                        .font(.system(size: 9.5, weight: .semibold))
-                                        .foregroundColor(tag.1 ? p.accentCyan : p.textSecondary)
-                                        .lineLimit(1)
-                                        .minimumScaleFactor(0.8)
-                                }
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .fill(tag.1 ? AnyShapeStyle(p.accentBlue.opacity(0.08)) : AnyShapeStyle(LinearGradient(colors: [p.trayTop, p.trayBottom], startPoint: .top, endPoint: .bottom)))
-                                )
-                                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tag.1 ? p.accentBlue.opacity(0.35) : p.cardBorder, lineWidth: 1))
-                            }
-                        }
-                    }
+            // city-tags (自适应内容宽度，不设固定长度，内容 100% 显示全)
+            VStack(alignment: .leading, spacing: 5) {
+                // 行 1: 核心足迹
+                HStack(spacing: 5) {
+                    cityTagBadge(model.cityTags[0]) // 柳州 (当前)
+                    cityTagBadge(model.cityTags[1]) // 南宁 (足迹 482km)
+                    Spacer(minLength: 0)
+                }
+                // 行 2: 桂粤长途足迹
+                HStack(spacing: 5) {
+                    cityTagBadge(model.cityTags[2]) // 桂林 (足迹 326km)
+                    cityTagBadge(model.cityTags[3]) // 广州 (足迹 680km)
+                    Spacer(minLength: 0)
+                }
+                // 行 3: 湾区与沿海城市
+                HStack(spacing: 5) {
+                    cityTagBadge(model.cityTags[4]) // 深圳 (足迹 410km)
+                    cityTagBadge(model.cityTags[5]) // 佛山
+                    cityTagBadge(model.cityTags[6]) // 珠海
+                    cityTagBadge(model.cityTags[7]) // 东莞
+                    Spacer(minLength: 0)
                 }
             }
         }
@@ -170,5 +164,23 @@ struct CityFootprintView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .padding(.bottom, 11)
+    }
+
+    // 自适应文字宽度的标签徽章 (Intrinsic Width，绝不截断任何字)
+    private func cityTagBadge(_ tag: (String, Bool)) -> some View {
+        HStack(spacing: 3.5) {
+            Circle().fill(p.accentBlue).frame(width: 4, height: 4)
+            Text(tag.0)
+                .font(.system(size: 9.5, weight: .semibold))
+                .foregroundColor(tag.1 ? p.accentCyan : p.textSecondary)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(tag.1 ? AnyShapeStyle(p.accentBlue.opacity(0.08)) : AnyShapeStyle(LinearGradient(colors: [p.trayTop, p.trayBottom], startPoint: .top, endPoint: .bottom)))
+        )
+        .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).strokeBorder(tag.1 ? p.accentBlue.opacity(0.35) : p.cardBorder, lineWidth: 1))
     }
 }
