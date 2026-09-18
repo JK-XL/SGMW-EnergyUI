@@ -148,6 +148,13 @@ final class DashboardModel: ObservableObject {
     let batteryTitle = "动力电池与低压电网工况"
     let batteryBus = "母线 99.4V · 正常"
     let batterySOC = 94
+    var batterySOCReal: Double { 93.8 }           // 官方 soc: 93.8 (环填充比例)
+    // 官方 batteryHealth 真值绑定 (sgmw_official_client.py --action summary, 2026-09-18)
+    var batterySOCText: String { "93.8%" }        // 官方 soc: 93.8
+    var batterySOHText: String { "99.0 % (极佳)" } // 官方 soh: 99.0
+    var lowBatVoltageText: String { "12.38 V (安全)" } // 官方 lowBatVoltage: 12.38
+    var coolingTempText: String { "24°C (正常)" }  // 官方 coolingTemp: 24°C (正常)
+    var tireTempDiffText: String { "29℃/28℃ (1℃)" } // 官方 tpms 温差真值
     let batteryDetails: [(String, String, String)] = [
         ("电池健康度 (SOH)", "99 % (几无衰减)", "green"),
         ("12V 小电瓶电压", "12.38 V (安全)", "green"),
@@ -174,9 +181,16 @@ final class DashboardModel: ObservableObject {
     ]
 
     // ===== 充电 OBC 与照明信号 =====
+    // 当前工况 4 行 + 8月充电历史 2 行 (官方 rechargePm 3617 / chargeTimeMin 47 / cdl 13.65)
     let obcRows: [(String, String, Bool)] = [
         ("状态", "未充电", false), ("功率", "0 kW", false),
         ("OBC电流", "0 A", false), ("OBC温度", "未充电", false),
+        ("8月充入", "13.65 kWh", true), ("8月时长", "47 分钟", true),
+    ]
+    let lightRows: [(String, String, Bool)] = [
+        ("近光灯", "关闭", true), ("远光灯", "关闭", true),
+        ("左右转向", "全关", true), ("示宽/雾灯", "全关", true),
+        ("日行灯", "自动", true), ("伴我回家", "关闭", true),
     ]
     let lightRows: [(String, String, Bool)] = [
         ("近光灯", "关闭", true), ("远光灯", "关闭", true),

@@ -28,13 +28,14 @@ struct BatteryPanelView: View {
                         .trim(from: 0, to: 1)
                         .stroke(p.trackBG, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     Circle()
-                        .trim(from: 0, to: Double(model.batterySOC) / 100.0)
+                        .trim(from: 0, to: model.batterySOCReal / 100.0)
                         .stroke(Color(hex: 0x28CD41), style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                         .shadow(color: Color(hex: 0x28CD41).opacity(0.5), radius: 3)
                         .modifier(BreathEffect())
-                    Text("\(model.batterySOC)%")
-                        .font(.system(size: 14.5, weight: .bold))
+                    Text(model.batterySOCText)
+                        .font(.system(size: 12.5, weight: .bold))
+                        .minimumScaleFactor(0.8)
                         .foregroundColor(p.textPrimary)
                 }
                 .frame(width: 60, height: 60)
@@ -43,10 +44,10 @@ struct BatteryPanelView: View {
 
                 // battery-details (2x2 两列拉齐分散到右边，标签零截断)
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 8) {
-                    detailCell(label: "健康度 (SOH)", val: "99 % (极佳)", colorKey: "green")
-                    detailCell(label: "12V 小电瓶", val: "12.38 V (安全)", colorKey: "green")
-                    detailCell(label: "电池平均温度", val: "29 ℃ (正常)", colorKey: "plain")
-                    detailCell(label: "温差 (高/低)", val: "29℃/28℃ (1℃)", colorKey: "cyan")
+                    detailCell(label: "健康度 (SOH)", val: model.batterySOHText, colorKey: "green")
+                    detailCell(label: "12V 小电瓶", val: model.lowBatVoltageText, colorKey: "green")
+                    detailCell(label: "冷却液温", val: model.coolingTempText, colorKey: "plain")
+                    detailCell(label: "温差 (高/低)", val: model.tireTempDiffText, colorKey: "cyan")
                 }
                 .frame(maxWidth: .infinity)
             }
