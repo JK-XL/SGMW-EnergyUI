@@ -126,7 +126,7 @@ struct CarSilhouetteView: View {
                 // 大灯 (glass + 4 蓝钻点)
                 headlightLeft.fill(p.carGlass).overlay(headlightLeft.stroke(p.carStroke, lineWidth: 1.1))
                 headlightRight.fill(p.carGlass).overlay(headlightRight.stroke(p.carStroke, lineWidth: 1.1))
-                ForEach(gemPoints, id: \.self) { pt in
+                ForEach(Array(gemPoints.enumerated()), id: \.offset) { _, pt in
                     Circle().fill(Color(hex: 0x007AFF)).frame(width: 2, height: 2).position(pt)
                 }
                 // 后视镜
