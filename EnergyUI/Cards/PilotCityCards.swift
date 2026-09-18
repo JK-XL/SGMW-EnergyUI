@@ -97,7 +97,7 @@ struct CityFootprintView: View {
                         .fill(p.accentBlue)
                         .frame(width: 6, height: 6)
                         .shadow(color: p.accentBlue.opacity(0.8), radius: 3.5)
-                        .modifier(PulseDotEffect())
+                        .opacity(0.9)
                     Text("点亮城市 · 足迹勋章")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(p.textPrimary)

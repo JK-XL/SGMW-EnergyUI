@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - 动力电池与低压电网工况 (1:1 v32 battery-panel: 68px SOC 环 + 2x2 详项)
+// MARK: - 动力电池与低压电网工况 (1:1 v32 battery-panel: 60px SOC 环 + 紧凑两列零换行)
 struct BatteryPanelView: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var model: DashboardModel
@@ -20,40 +20,30 @@ struct BatteryPanelView: View {
             }
             .padding(.bottom, 12)
 
-            HStack(spacing: 16) {
-                // battery-ring (68px, -90° 起始, dasharray 93.8/100)
+            HStack(spacing: 14) {
+                // battery-ring (60px 紧凑光环)
                 ZStack {
                     Circle()
                         .trim(from: 0, to: 1)
-                        .stroke(p.trackBG, style: StrokeStyle(lineWidth: 3.5 * 2, lineCap: .round))
+                        .stroke(p.trackBG, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     Circle()
                         .trim(from: 0, to: Double(model.batterySOC) / 100.0)
-                        .stroke(Color(hex: 0x28CD41), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .stroke(Color(hex: 0x28CD41), style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .shadow(color: Color(hex: 0x28CD41).opacity(0.6), radius: 4)
+                        .shadow(color: Color(hex: 0x28CD41).opacity(0.5), radius: 3)
                         .modifier(BreathEffect())
                     Text("\(model.batterySOC)%")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.system(size: 14.5, weight: .bold))
                         .foregroundColor(p.textPrimary)
                 }
-                .frame(width: 68, height: 68)
+                .frame(width: 60, height: 60)
 
-                // battery-details (2x2, 11px)
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 8) {
-                    ForEach(0..<model.batteryDetails.count, id: \.self) { idx in
-                        let d = model.batteryDetails[idx]
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(d.0)
-                                .font(.system(size: 10))
-                                .foregroundColor(p.textMuted)
-                            Text(d.1)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(detailColor(d.2))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.75)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                // battery-details (2x2, 标签与数值紧凑对齐，绝不折行截断)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                    detailCell(label: "电池健康度 (SOH)", val: "99 % (极佳)", colorKey: "green")
+                    detailCell(label: "12V 小电瓶", val: "12.38 V (安全)", colorKey: "green")
+                    detailCell(label: "电池平均温度", val: "29 ℃ (正常)", colorKey: "plain")
+                    detailCell(label: "温差 (高/低)", val: "29℃/28℃ (1℃)", colorKey: "cyan")
                 }
             }
         }
@@ -61,6 +51,21 @@ struct BatteryPanelView: View {
         .padding(.vertical, 14)
         .v32Card(radius: 18)
         .padding(.bottom, 12)
+    }
+
+    private func detailCell(label: String, val: String, colorKey: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(p.textMuted)
+                .lineLimit(1)
+            Text(val)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(detailColor(colorKey))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func detailColor(_ key: String) -> Color {

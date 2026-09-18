@@ -36,6 +36,11 @@ struct ContentView: View {
             }
             .navigationBarHidden(true)
             .preferredColorScheme(colorScheme)
+            // B5 原生半屏日期选择器
+            .sheet(isPresented: $model.showDatePicker) {
+                CustomDatePickerSheet()
+                    .environmentObject(model)
+            }
         }
         .navigationViewStyle(.stack)
     }
@@ -49,12 +54,73 @@ struct ContentView: View {
     }
 }
 
-// 背景色跟随主题
+// 背景色跟随主题 (切除全局 animation，杜绝 ScrollView 抖动)
 private struct PaletteBG: View {
     @Environment(\.colorScheme) private var scheme
     var body: some View {
         V32Palette(scheme).bgColor
             .ignoresSafeArea()
-            .animation(.easeInOut(duration: 0.25), value: scheme)
+    }
+}
+
+// MARK: - B5 原生半屏日期范围选择抽屉
+struct CustomDatePickerSheet: View {
+    @Environment(\.colorScheme) private var scheme
+    @EnvironmentObject private var model: DashboardModel
+    @Environment(\.presentationMode) private var presentationMode
+
+    private var p: V32Palette { V32Palette(scheme) }
+
+    var body: some View {
+        NavigationView {
+            ZStack {
+                p.bgColor.ignoresSafeArea()
+                VStack(spacing: 16) {
+                    VStack(spacing: 12) {
+                        DatePicker("起始日期", selection: $model.customStartDate, displayedComponents: [.date])
+                            .datePickerStyle(.compact)
+                            .environment(\.locale, Locale(identifier: "zh_CN"))
+                            .foregroundColor(p.textPrimary)
+
+                        Divider().opacity(0.6)
+
+                        DatePicker("结束日期", selection: $model.customEndDate, displayedComponents: [.date])
+                            .datePickerStyle(.compact)
+                            .environment(\.locale, Locale(identifier: "zh_CN"))
+                            .foregroundColor(p.textPrimary)
+                    }
+                    .padding(16)
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(p.cardBG))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(p.cardBorder, lineWidth: 1))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 20)
+
+                    Spacer()
+
+                    Button {
+                        model.applyCustomDateRange()
+                    } label: {
+                        Text("确 定 检 索")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 46)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(p.accentCyan))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 30)
+                }
+            }
+            .navigationTitle("自选出行日期范围")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") {
+                        presentationMode.wrappedValue.dismiss()
+                    }
+                    .foregroundColor(p.textSecondary)
+                }
+            }
+        }
+        .navigationViewStyle(.stack)
     }
 }

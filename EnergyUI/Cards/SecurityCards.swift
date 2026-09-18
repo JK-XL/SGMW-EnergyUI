@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - 四轮胎压监测卡 (1:1 v32 v5-status-card + tire-wire-box + 纯净卡宴剪影)
+// MARK: - 四轮胎压监测卡 (1:1 v32 v5-status-card + 宽度释放不换行 + 纯净卡宴剪影内敛居中)
 struct TirePressureCardView: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var model: DashboardModel
@@ -27,34 +27,35 @@ struct TirePressureCardView: View {
                     .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(p.accentGreen.opacity(0.12)))
                     .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(p.accentGreen.opacity(0.25), lineWidth: 1))
             }
-            .padding(.bottom, 12)
+            .padding(.bottom, 10)
 
-            // tire-wire-box (pad12/14, radius14, sub底)
-            HStack(spacing: 0) {
-                // 左列 (左前/左后, border-left 3px 绿)
-                VStack(spacing: 18) {
-                    tireUnit(label: "左前 (tireLF)", val: model.tireLF, alignRight: false)
-                    tireUnit(label: "左后 (tireLR)", val: model.tireLR, alignRight: false)
+            // tire-wire-box (放宽列宽 + 纯净标签 + 车模等比收敛)
+            HStack(alignment: .center, spacing: 0) {
+                // 左列 (左前 / 左后，宽度 86pt 充足释放，绝不折行)
+                VStack(spacing: 14) {
+                    tireUnit(label: "左前", val: model.tireLF, alignRight: false)
+                    tireUnit(label: "左后", val: model.tireLR, alignRight: false)
                 }
-                .frame(width: 62, alignment: .leading)
+                .frame(width: 86, alignment: .leading)
 
-                Spacer()
+                Spacer(minLength: 4)
 
-                // 中央车模 (viewBox 100x220)
+                // 中央车模：等比内敛居中，彻底消除出圈下坠
                 CarSilhouetteView()
-                    .frame(maxHeight: 156)
-                    .padding(.horizontal, 2)
+                    .frame(width: 80, height: 120)
+                    .scaleEffect(0.64)
+                    .clipped()
 
-                Spacer()
+                Spacer(minLength: 4)
 
-                // 右列 (右前/右后, border-right 3px 绿, 右对齐)
-                VStack(spacing: 18) {
-                    tireUnit(label: "右前 (tireRF)", val: model.tireRF, alignRight: true)
-                    tireUnit(label: "右后 (tireRR)", val: model.tireRR, alignRight: true)
+                // 右列 (右前 / 右后，右对齐)
+                VStack(spacing: 14) {
+                    tireUnit(label: "右前", val: model.tireRF, alignRight: true)
+                    tireUnit(label: "右后", val: model.tireRR, alignRight: true)
                 }
-                .frame(width: 62, alignment: .trailing)
+                .frame(width: 86, alignment: .trailing)
             }
-            .padding(EdgeInsets(top: 12, leading: 14, bottom: 12, trailing: 14))
+            .padding(EdgeInsets(top: 10, leading: 12, bottom: 10, trailing: 12))
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(p.subCardBG))
             .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(p.subCardBorder, lineWidth: 1))
         }
@@ -65,20 +66,23 @@ struct TirePressureCardView: View {
     }
 
     private func tireUnit(label: String, val: Int, alignRight: Bool) -> some View {
-        VStack(alignment: alignRight ? .trailing : .leading, spacing: 1) {
+        VStack(alignment: alignRight ? .trailing : .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 10))
+                .font(.system(size: 10.5, weight: .medium))
                 .foregroundColor(p.textMuted)
-            HStack(alignment: .lastTextBaseline, spacing: 2) {
+            HStack(alignment: .lastTextBaseline, spacing: 3) {
                 Text("\(val)")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(p.textPrimary)
+                    .lineLimit(1)
                 Text("kPa")
-                    .font(.system(size: 9, weight: .semibold))
+                    .font(.system(size: 9.5, weight: .semibold))
                     .foregroundColor(p.accentGreen)
+                    .lineLimit(1)
             }
+            .lineLimit(1)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: alignRight ? .trailing : .leading)
         .background(
@@ -91,7 +95,6 @@ struct TirePressureCardView: View {
                 .strokeBorder(p.cardBorder, lineWidth: 1)
         )
         .overlay(alignment: alignRight ? .trailing : .leading) {
-            // 3px 绿色边条 (1:1 border-left/right)
             Rectangle().fill(p.accentGreen).frame(width: 3)
         }
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -104,49 +107,46 @@ struct CarSilhouetteView: View {
     private var p: V32Palette { V32Palette(scheme) }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                // 4 只内收车轮 (rect + 绿色反光条)
-                Group {
-                    wheel(x: 13, y: 36, w: 8, h: 26, rx: 3.5)
-                    wheel(x: 79, y: 36, w: 8, h: 26, rx: 3.5)
-                    wheel(x: 12, y: 148, w: 9.5, h: 30, rx: 4)
-                    wheel(x: 78.5, y: 148, w: 9.5, h: 30, rx: 4)
-                }
-                // 车身主轮廓
-                bodyOutline
-                    .fill(LinearGradient(colors: [p.carPaintTop, p.carPaintMid, p.carPaintBottom],
-                                         startPoint: UnitPoint(x: 0, y: 0), endPoint: UnitPoint(x: 1, y: 1)))
-                    .overlay(bodyOutline.stroke(p.carStroke, lineWidth: 1.8))
-                // 机盖双脊线
-                Path { $0.move(to: CGPoint(x: 36, y: 20)); $0.addCurve(to: CGPoint(x: 37, y: 62), control1: CGPoint(x: 39, y: 34), control2: CGPoint(x: 38, y: 52)) }
-                    .stroke(p.carStroke.opacity(0.5), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-                Path { $0.move(to: CGPoint(x: 64, y: 20)); $0.addCurve(to: CGPoint(x: 63, y: 62), control1: CGPoint(x: 61, y: 34), control2: CGPoint(x: 62, y: 52)) }
-                    .stroke(p.carStroke.opacity(0.5), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-                // 大灯 (glass + 4 蓝钻点)
-                headlightLeft.fill(p.carGlass).overlay(headlightLeft.stroke(p.carStroke, lineWidth: 1.1))
-                headlightRight.fill(p.carGlass).overlay(headlightRight.stroke(p.carStroke, lineWidth: 1.1))
-                ForEach(Array(gemPoints.enumerated()), id: \.offset) { _, pt in
-                    Circle().fill(Color(hex: 0x007AFF)).frame(width: 2, height: 2).position(pt)
-                }
-                // 后视镜
-                mirrorLeft.fill(p.carGlass).overlay(mirrorLeft.stroke(p.carStroke, lineWidth: 1))
-                mirrorRight.fill(p.carGlass).overlay(mirrorRight.stroke(p.carStroke, lineWidth: 1))
-                // 前后风挡
-                windshieldFront.fill(p.carGlass).overlay(windshieldFront.stroke(p.carStroke, lineWidth: 1.2))
-                windshieldRear.fill(p.carGlass).overlay(windshieldRear.stroke(p.carStroke, lineWidth: 1.2))
-                // 后翼子板微光肩线
-                Path { $0.move(to: CGPoint(x: 16, y: 126)); $0.addCurve(to: CGPoint(x: 15, y: 176), control1: CGPoint(x: 12, y: 138), control2: CGPoint(x: 11, y: 158)) }
-                    .stroke(p.carStroke.opacity(0.4), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-                Path { $0.move(to: CGPoint(x: 84, y: 126)); $0.addCurve(to: CGPoint(x: 85, y: 176), control1: CGPoint(x: 88, y: 138), control2: CGPoint(x: 89, y: 158)) }
-                    .stroke(p.carStroke.opacity(0.4), style: StrokeStyle(lineWidth: 1, lineCap: .round))
-                // 贯穿式 3D 红色 LED 尾灯带
-                Path { $0.move(to: CGPoint(x: 16, y: 193)); $0.addCurve(to: CGPoint(x: 84, y: 193), control1: CGPoint(x: 32, y: 197), control2: CGPoint(x: 68, y: 197)) }
-                    .stroke(Color(hex: 0xFF3B30), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
-                    .shadow(color: Color(hex: 0xFF3B30), radius: 2)
+        ZStack {
+            // 4 只内收车轮 (rect + 绿色反光条)
+            wheel(x: 13, y: 36, w: 8, h: 26, rx: 3.5)
+            wheel(x: 79, y: 36, w: 8, h: 26, rx: 3.5)
+            wheel(x: 12, y: 148, w: 9.5, h: 30, rx: 4)
+            wheel(x: 78.5, y: 148, w: 9.5, h: 30, rx: 4)
+
+            // 车身主轮廓
+            bodyOutline
+                .fill(LinearGradient(colors: [p.carPaintTop, p.carPaintMid, p.carPaintBottom],
+                                     startPoint: UnitPoint(x: 0, y: 0), endPoint: UnitPoint(x: 1, y: 1)))
+                .overlay(bodyOutline.stroke(p.carStroke, lineWidth: 1.8))
+            // 机盖双脊线
+            Path { $0.move(to: CGPoint(x: 36, y: 20)); $0.addCurve(to: CGPoint(x: 37, y: 62), control1: CGPoint(x: 39, y: 34), control2: CGPoint(x: 38, y: 52)) }
+                .stroke(p.carStroke.opacity(0.5), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+            Path { $0.move(to: CGPoint(x: 64, y: 20)); $0.addCurve(to: CGPoint(x: 63, y: 62), control1: CGPoint(x: 61, y: 34), control2: CGPoint(x: 62, y: 52)) }
+                .stroke(p.carStroke.opacity(0.5), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+            // 大灯 (glass + 4 蓝钻点)
+            headlightLeft.fill(p.carGlass).overlay(headlightLeft.stroke(p.carStroke, lineWidth: 1.1))
+            headlightRight.fill(p.carGlass).overlay(headlightRight.stroke(p.carStroke, lineWidth: 1.1))
+            ForEach(Array(gemPoints.enumerated()), id: \.offset) { _, pt in
+                Circle().fill(Color(hex: 0x007AFF)).frame(width: 2, height: 2).position(pt)
             }
-            .aspectRatio(100.0 / 220.0, contentMode: .fit)
+            // 后视镜
+            mirrorLeft.fill(p.carGlass).overlay(mirrorLeft.stroke(p.carStroke, lineWidth: 1))
+            mirrorRight.fill(p.carGlass).overlay(mirrorRight.stroke(p.carStroke, lineWidth: 1))
+            // 前后风挡
+            windshieldFront.fill(p.carGlass).overlay(windshieldFront.stroke(p.carStroke, lineWidth: 1.2))
+            windshieldRear.fill(p.carGlass).overlay(windshieldRear.stroke(p.carStroke, lineWidth: 1.2))
+            // 后翼子板微光肩线
+            Path { $0.move(to: CGPoint(x: 16, y: 126)); $0.addCurve(to: CGPoint(x: 15, y: 176), control1: CGPoint(x: 12, y: 138), control2: CGPoint(x: 11, y: 158)) }
+                .stroke(p.carStroke.opacity(0.4), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+            Path { $0.move(to: CGPoint(x: 84, y: 126)); $0.addCurve(to: CGPoint(x: 85, y: 176), control1: CGPoint(x: 88, y: 138), control2: CGPoint(x: 89, y: 158)) }
+                .stroke(p.carStroke.opacity(0.4), style: StrokeStyle(lineWidth: 1, lineCap: .round))
+            // 贯穿式 3D 红色 LED 尾灯带 (高度内敛)
+            Path { $0.move(to: CGPoint(x: 16, y: 193)); $0.addCurve(to: CGPoint(x: 84, y: 193), control1: CGPoint(x: 32, y: 197), control2: CGPoint(x: 68, y: 197)) }
+                .stroke(Color(hex: 0xFF3B30), style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
+                .shadow(color: Color(hex: 0xFF3B30), radius: 2)
         }
+        .frame(width: 100, height: 220)
     }
 
     private func wheel(x: CGFloat, y: CGFloat, w: CGFloat, h: CGFloat, rx: CGFloat) -> some View {
@@ -168,7 +168,7 @@ struct CarSilhouetteView: View {
          CGPoint(x: 73, y: 33), CGPoint(x: 77, y: 32), CGPoint(x: 73, y: 39), CGPoint(x: 77, y: 38)]
     }
 
-    // 修长卡宴外轮廓 (原 SVG path 逐段转换)
+    // 修长卡宴外轮廓
     private var bodyOutline: Path {
         var path = Path()
         path.move(to: CGPoint(x: 30, y: 18))

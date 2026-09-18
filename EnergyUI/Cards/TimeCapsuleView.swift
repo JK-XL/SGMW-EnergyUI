@@ -25,10 +25,10 @@ struct TimeCapsuleView: View {
             // archive-tray (padding 4, gap 4, margin-top 5)
             if model.isTrayOpen {
                 HStack(spacing: 4) {
-                    archivePill(.thisYear, main: "今年", sub: "(2026)")
-                    archivePill(.lastYear, main: "去年", sub: "(2025)")
-                    archivePill(.lifetime, main: "提车至今", sub: "(644天)")
-                    archivePill(.custom, main: "自选日期", sub: "(📅)")
+                    archivePill(.thisYear, main: "今年", sub: "(2026)", isIcon: false)
+                    archivePill(.lastYear, main: "去年", sub: "(2025)", isIcon: false)
+                    archivePill(.lifetime, main: "提车至今", sub: "(644天)", isIcon: false)
+                    archivePill(.custom, main: "自选日期", sub: "calendar", isIcon: true)
                 }
                 .padding(4)
                 .margin(top: 5)
@@ -88,19 +88,29 @@ struct TimeCapsuleView: View {
         .buttonStyle(.plain)
     }
 
-    // 抽屉药丸 (min-height 34, radius 8, ap-main 10.5px, ap-sub 8.5px)
-    private func archivePill(_ period: PeriodType, main: String, sub: String) -> some View {
+    // 抽屉药丸 (min-height 34, radius 8, 去除生硬括号，自选日期支持图标与原生弹窗)
+    private func archivePill(_ period: PeriodType, main: String, sub: String, isIcon: Bool) -> some View {
         let active = model.selectedPeriod == period
         return Button {
-            model.selectArchive(period)
+            if period == .custom {
+                model.showDatePicker = true
+            } else {
+                model.selectArchive(period)
+            }
         } label: {
             VStack(spacing: 1) {
                 Text(main)
                     .font(.system(size: 10.5, weight: active ? .bold : .semibold))
                     .foregroundColor(active ? p.accentCyan : p.textSecondary)
-                Text(sub)
-                    .font(.system(size: 8.5, weight: .medium))
-                    .foregroundColor(active ? p.accentCyan.opacity(0.9) : p.textMuted)
+                if isIcon {
+                    Image(systemName: sub)
+                        .font(.system(size: 8.5))
+                        .foregroundColor(active ? p.accentCyan : p.textMuted)
+                } else {
+                    Text(sub)
+                        .font(.system(size: 8.5, weight: .medium))
+                        .foregroundColor(active ? p.accentCyan.opacity(0.9) : p.textMuted)
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 34)
             .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(active ? p.accentCyan.opacity(0.15) : p.cardBG))

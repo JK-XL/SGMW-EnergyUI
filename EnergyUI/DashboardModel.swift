@@ -48,6 +48,9 @@ final class DashboardModel: ObservableObject {
     @Published var isTrayOpen: Bool = false
     @Published var selectedChartMonth: Int? = nil
     @Published var chartSubHint: String = "点击柱条即刻切换对应月份"
+    @Published var showDatePicker: Bool = false
+    @Published var customStartDate: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    @Published var customEndDate: Date = Date()
 
     // ===== Hero 头部 (实车快照 1:1) =====
     let carName = "宝骏云海"
@@ -296,6 +299,26 @@ final class DashboardModel: ObservableObject {
         f.locale = Locale(identifier: "zh_CN")
         f.dateFormat = "yyyy年M月d日"
         return f.string(from: Date())
+    }
+
+    func toggleTheme() {
+        withAnimation(.easeInOut(duration: 0.25)) {
+            themeMode = (themeMode == .light) ? .dark : .light
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    func applyCustomDateRange() {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy年M月d日"
+        let startStr = f.string(from: customStartDate)
+        let endStr = f.string(from: customEndDate)
+        selectedPeriod = .custom
+        selectedChartMonth = nil
+        chartSubHint = "已检索：\(startStr) ~ \(endStr)"
+        showDatePicker = false
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 
     // ===== 交互动作 =====
