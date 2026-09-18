@@ -12,7 +12,8 @@ struct ContentView: View {
                     TopNavView()                    // 顶部导航 + 单SF图标主题切换
                     HeaderCardView()                // Hero 头部卡
                     TimeCapsuleView()               // 时间舱 + 更多抽屉 + 就地悬浮自选日期
-                    MetricGridView()                // 10 宫格能耗大盘 (全周期动态响应)
+                    StatusHeadlineView()            // 状态行
+                    MetricGridView()                // 10 宫格能耗大盘
                     PilotCardView()                 // 灵眸智驾卡
                     CityFootprintView()             // 城市足迹卡 (内容自适应全显示)
                     DailyScrollView()               // 七天横滑明细
