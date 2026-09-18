@@ -192,10 +192,6 @@ final class DashboardModel: ObservableObject {
         ("左右转向", "全关", true), ("示宽/雾灯", "全关", true),
         ("日行灯", "自动", true), ("伴我回家", "关闭", true),
     ]
-    let lightRows: [(String, String, Bool)] = [
-        ("近光灯", "关闭", true), ("远光灯", "关闭", true),
-        ("左右转向", "全关", true), ("示宽/雾灯", "全关", true),
-    ]
 
     // ===== 10 宫格静态定义 (颜色顺序/文案 1:1 v32) =====
     // MARK: - 周期称谓 (标题/副标题/数值三者语义一致)
