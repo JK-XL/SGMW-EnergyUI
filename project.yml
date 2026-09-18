@@ -1,0 +1,34 @@
+name: EnergyUI
+options:
+  bundleIdPrefix: com.jkgl
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: 1.0.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  EnergyUI:
+    type: application
+    platform: iOS
+    sources:
+      - path: EnergyUI
+    info:
+      path: EnergyUI/Info.plist
+      properties:
+        CFBundleDisplayName: 能耗UI
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Automatic
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jkgl.energyui
+        TARGETED_DEVICE_FAMILY: "1"
+        IPHONEOS_DEPLOYMENT_TARGET: "15.0"
