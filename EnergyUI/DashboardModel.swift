@@ -184,46 +184,133 @@ final class DashboardModel: ObservableObject {
     ]
 
     // ===== 10 宫格静态定义 (颜色顺序/文案 1:1 v32) =====
-    let metricDefs: [MetricCardDef] = [
-        MetricCardDef(colorKey: "yellow", icon: "speedometer", title: "百公里油耗", unit: "L/100km", subT: "插混能耗折算", subV: "燃油续航 673km", badge: "插混"),
-        MetricCardDef(colorKey: "green", icon: "info.circle", title: "百公里耗电", unit: "kWh/100km", subT: "能耗水平", subV: "同级领先", badge: "极省"),
-        MetricCardDef(colorKey: "yellow", icon: "drop.fill", title: "今日消耗燃油", unit: "L", subT: "纯电优先模式", subV: "今日零油耗", badge: "省油"),
-        MetricCardDef(colorKey: "cyan", icon: "bolt.fill", title: "今日电耗", unit: "kWh", subT: "今日耗电", subV: "动态累计", badge: "实时"),
-        MetricCardDef(colorKey: "green", icon: "car.fill", title: "今日里程", unit: "km", subT: "今日累计", subV: "实时记录", badge: "里程"),
-        MetricCardDef(colorKey: "cyan", icon: "battery.100", title: "今日充入电量", unit: "kWh", subT: "今日未充电", subV: "8月充入 13.65 kWh", badge: "电量"),
-        MetricCardDef(colorKey: "green", icon: "figure.walk", title: "今日行驶里程", unit: "km", subT: "动态行驶", subV: "行程活跃中", badge: "行驶"),
-        MetricCardDef(colorKey: "purple", icon: "clock.arrow.circlepath", title: "昨日里程", unit: "km", subT: "昨日耗电", subV: "8.3 kWh", badge: "昨日"),
-        MetricCardDef(colorKey: "blue", icon: "chart.line.uptrend.xyaxis", title: "累计出行次数", unit: "次", subT: "全生命周期", subV: "出行总和", badge: "总计"),
-        MetricCardDef(colorKey: "purple", icon: "calendar", title: "相伴天数", unit: "天", subT: "提车至今", subV: "风雨同行", badge: "陪伴"),
-    ]
+    // MARK: - 周期称谓 (标题/副标题/数值三者语义一致)
+    /// 标题前缀词: 点昨日全说"昨日", 点8月全说"8月"
+    var periodWord: String {
+        if let m = selectedChartMonth { return "\(m)月" }
+        switch selectedPeriod {
+        case .today:     return "今日"
+        case .yesterday: return "昨日"
+        case .thisMonth: return "9月"
+        case .lastMonth: return "8月"
+        case .thisYear:  return "今年"
+        case .lastYear:  return "去年"
+        case .lifetime:  return "累计"
+        case .custom:    return "自选"
+        }
+    }
+    /// 副标题用词 (更口语/更完整)
+    var periodSubWord: String {
+        if let m = selectedChartMonth { return "\(m)月" }
+        switch selectedPeriod {
+        case .today:     return "今日"
+        case .yesterday: return "昨日"
+        case .thisMonth: return "9月"
+        case .lastMonth: return "8月"
+        case .thisYear:  return "今年"
+        case .lastYear:  return "去年"
+        case .lifetime:  return "提车至今"
+        case .custom:    return "自选区间"
+        }
+    }
+    /// 官方是否已结算该周期 (里程/电耗/燃油有真值)
+    var periodSettled: Bool {
+        if let m = selectedChartMonth { return m == 8 }
+        switch selectedPeriod {
+        case .today, .yesterday, .lastMonth, .lifetime: return true
+        default: return false
+        }
+    }
+
+    // MARK: - 10 宫格卡片定义 (标题+副标题 随周期派生, 与数值语义一致)
+    var metricDefs: [MetricCardDef] {
+        let w = periodWord, s = periodSubWord
+        return [
+            MetricCardDef(colorKey: "yellow", icon: "speedometer", title: "百公里油耗", unit: "L/100km",
+                          subT: "插混能耗折算", subV: "燃油续航 673km", badge: "插混"),
+            MetricCardDef(colorKey: "green", icon: "info.circle", title: "百公里耗电", unit: "kWh/100km",
+                          subT: "能耗水平", subV: "同级领先", badge: "极省"),
+            MetricCardDef(colorKey: "yellow", icon: "drop.fill", title: "\(w)消耗燃油", unit: "L",
+                          subT: periodSettled ? "\(s)油耗累计" : "官方次月结算",
+                          subV: periodSettled ? "纯电优先模式" : "尚未结算", badge: "省油"),
+            MetricCardDef(colorKey: "cyan", icon: "bolt.fill", title: "\(w)电耗", unit: "kWh",
+                          subT: periodSettled ? "\(s)耗电累计" : "官方次月结算",
+                          subV: periodSettled ? "动态累计" : "尚未结算", badge: "实时"),
+            MetricCardDef(colorKey: "green", icon: "car.fill", title: "\(w)里程", unit: "km",
+                          subT: periodSettled ? "\(s)里程累计" : "官方次月结算",
+                          subV: periodSettled ? "实时记录" : "尚未结算", badge: "里程"),
+            MetricCardDef(colorKey: "cyan", icon: "battery.100", title: "\(w)充入电量", unit: "kWh",
+                          subT: chargingSubT, subV: chargingSubV, badge: "电量"),
+            MetricCardDef(colorKey: "green", icon: "figure.walk", title: "\(w)出行次数", unit: "次",
+                          subT: "\(s)出行记录", subV: "官方实时可算", badge: "行程"),
+            MetricCardDef(colorKey: "purple", icon: "bolt.circle.fill", title: "\(w)充电次数", unit: "次",
+                          subT: "\(s)充电记录", subV: "官方实时可算", badge: "充电"),
+            MetricCardDef(colorKey: "blue", icon: "chart.line.uptrend.xyaxis", title: "累计出行次数", unit: "次",
+                          subT: "全生命周期", subV: "出行总和", badge: "总计"),
+            MetricCardDef(colorKey: "purple", icon: "calendar", title: "相伴天数", unit: "天",
+                          subT: "提车至今", subV: "风雨同行", badge: "陪伴")
+        ]
+    }
+
+    /// #6 充入电量 副标题: 按周期显示官方真值, 消除"恒定 0.0 却讲 8月"的困惑
+    private var chargingSubT: String {
+        if let m = selectedChartMonth {
+            return m == 8 ? "8月充入 13.65 kWh" : "\(m)月尚未结算"
+        }
+        switch selectedPeriod {
+        case .today:     return "今日未充电"
+        case .yesterday: return "昨日未充电"
+        case .thisMonth: return "9月充电 1 次"
+        case .lastMonth: return "8月充入 13.65 kWh"
+        case .thisYear:  return "官方无年度汇总"
+        case .lastYear:  return "账本未收录"
+        case .lifetime:  return "累计充入待统计"
+        case .custom:    return "自选区间"
+        }
+    }
+    private var chargingSubV: String {
+        if let m = selectedChartMonth {
+            return m == 8 ? "已结算" : "—"
+        }
+        switch selectedPeriod {
+        case .today, .yesterday: return "8月充入 13.65 kWh"
+        case .thisMonth:         return "充入待结算"
+        case .lastMonth:         return "充电 1 次"
+        case .thisYear, .lastYear, .lifetime: return "—"
+        case .custom:            return "—"
+        }
+    }
 
     // MARK: - 联动派生 (1:1 对齐 v32 selectPrimary / selectArchive / quickMonth)
 
     // 10 宫格 5 个动态值: mil / km / energy / fuelBurn / starts
-    // 官方实测真值 (sgmw_official_client.py --action summary, 2026-09-18)
-    // 里程/电耗: 官方仅 T+1 结算上一完整月, 本月与更早月份里程/电耗官方返回 0.0 → 显 "—"
-    // 出行/充电次数: 官方任意窗口实时可算, 全部为真值
-    func metricValues() -> (mil: String, km: String, energy: String, fuel: String, starts: String) {
+    // 官方实测真值 (sgmw_official_client.py --action summary / mixmessage, 2026-09-18)
+    // 里程/电耗/fuel: 官方仅 T+1 结算上一完整月, 未结算周期显 "—"
+    // 出行/充电次数: 官方任意窗口实时可算, 全部为真值 → 永不显 "—"
+    // 顺序: (里程, 里程, 电耗, 燃油, 出行次数, 充电次数)
+    func metricValues() -> (mil: String, km: String, energy: String, fuel: String, starts: String, charges: String) {
         switch selectedPeriod {
-        case .today:     return ("18.5", "18.5", "2.4", "0.0", "162")
-        case .yesterday: return ("65.0", "65.0", "8.3", "0.2", "162")
-        case .thisMonth: return ("—", "—", "—", "—", "162")        // 9月: 里程/电耗官方未结算
-        case .lastMonth: return ("225.7", "225.7", "13.65", "0.0", "162") // 8月: 官方已结算
-        case .thisYear:  return ("—", "—", "—", "—", "162")        // 2026: 官方无年度汇总
-        case .lastYear:  return ("—", "—", "—", "—", "162")        // 2025: 账本未收录
-        case .lifetime:  return ("9,537", "9,537", "—", "—", "162") // 提车至今: 仪表总里程为真值
-        case .custom:    return ("—", "—", "—", "—", "—")
+        case .today:     return ("18.5", "18.5", "2.4", "0.0", "2", "0")
+        case .yesterday: return ("65.0", "65.0", "8.3", "0.2", "4", "0")
+        case .thisMonth: return ("—", "—", "—", "—", "7", "1")          // 9月: 里程/电耗官方未结算
+        case .lastMonth: return ("225.7", "225.7", "13.65", "0.0", "16", "1") // 8月: 官方已结算
+        case .thisYear:  return ("—", "—", "—", "—", "162", "14")       // 2026: 无年度汇总, 次数为累加真值
+        case .lastYear:  return ("—", "—", "—", "—", "—", "—")         // 2025: 账本未收录
+        case .lifetime:  return ("9,537", "9,537", "—", "—", "162", "14") // 提车至今: 仪表总里程为真值
+        case .custom:    return ("—", "—", "—", "—", "—", "—")
         }
     }
 
     // 柱图月份覆盖 (quickMonth): 里程/电耗官方仅 8月 已结算, 其余月份官方返回 0.0 → 显 "—"
-    // 出行次数为官方真值: 2月62 / 3月27 / 4月0 / 5月50 / 6月0 / 7月0 / 8月16 / 9月7
-    func chartOverride(month: Int) -> (mil: String, km: String, energy: String, fuel: String, starts: String)? {
+    // 出行/充电次数为官方真值, 任意窗口实时可算
+    func chartOverride(month: Int) -> (mil: String, km: String, energy: String, fuel: String, starts: String, charges: String)? {
         guard let m = selectedChartMonth, m == month else { return nil }
-        let starts = barMonths.first { $0.month == m }?.starts ?? 0
+        let bm = barMonths.first { $0.month == m }
+        let starts = bm?.starts ?? 0
         switch m {
-        case 8: return ("225.7", "225.7", "13.65", "0.0", "\(starts)")
-        default: return ("—", "—", "—", "—", "\(starts)")
+        case 8: return ("225.7", "225.7", "13.65", "0.0", "\(starts)", "1")
+        case 9: return ("—", "—", "—", "—", "\(starts)", "1")
+        default: return ("—", "—", "—", "—", "\(starts)", "0")
         }
     }
 
@@ -235,23 +322,24 @@ final class DashboardModel: ObservableObject {
             case 2: return ov.fuel
             case 3: return ov.energy
             case 4: return ov.mil
-            case 6: return ov.km
+            case 6: return ov.starts     // {周期}出行次数
+            case 7: return ov.charges    // {周期}充电次数
             case 8: return ov.starts
             default: break
             }
         }
         let base = metricValues()
         switch index {
-        case 0: return "1.2"       // card-val-avg-fuel (恒定)
-        case 1: return "12.4"      // card-val-per-hundred (恒定)
-        case 2: return base.fuel   // card-val-fuel-burn
-        case 3: return base.energy // card-val-today-energy
-        case 4: return base.mil    // card-val-today-mil
-        case 5: return "0.0"       // card-val-today-charging (恒定)
-        case 6: return base.km     // card-val-today-km
-        case 7: return "65.0"      // card-val-yest-km (恒定)
-        case 8: return base.starts // card-val-total-starts
-        case 9: return "644"       // card-val-days (恒定)
+        case 0: return "1.2"        // card-val-avg-fuel (恒定, 官方窗口均值)
+        case 1: return "12.4"       // card-val-per-hundred (恒定)
+        case 2: return base.fuel    // {周期}消耗燃油
+        case 3: return base.energy  // {周期}电耗
+        case 4: return base.mil     // {周期}里程
+        case 5: return base.energy  // {周期}充入电量 (与官方 cdl 同源)
+        case 6: return base.starts  // {周期}出行次数
+        case 7: return base.charges // {周期}充电次数
+        case 8: return base.starts  // 累计出行次数
+        case 9: return "644"        // card-val-days (恒定)
         default: return "--"
         }
     }
