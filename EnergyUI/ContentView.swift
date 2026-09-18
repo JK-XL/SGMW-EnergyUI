@@ -24,13 +24,9 @@ struct ContentView: View {
                     PedalGearCardView()             // 机电踏板与工况
                     ThermalMatrixView()             // 温控 4 模块
                     PairGridView()                  // 充电OBC + 照明信号
-                    Text("SGMW-EnergyUI · v32 1:1 原生重写预览")
-                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                        .foregroundColor(Color(hex: 0x9CA3AF))
-                        .padding(.top, 14)
-                        .padding(.bottom, 30)
                 }
                 .padding(14)
+                .padding(.bottom, 20)
             }
         }
         .preferredColorScheme(colorScheme)

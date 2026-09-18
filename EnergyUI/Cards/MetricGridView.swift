@@ -1,29 +1,6 @@
 import SwiftUI
 
-// MARK: - 状态行 (status-headline 11px)
-struct StatusHeadlineView: View {
-    @Environment(\.colorScheme) private var scheme
-    @EnvironmentObject private var model: DashboardModel
-    private var p: V32Palette { V32Palette(scheme) }
-
-    var body: some View {
-        HStack {
-            Text(model.headlineDesc)
-                .font(.system(size: 11))
-                .foregroundColor(p.textMuted)
-            Spacer()
-            HStack(spacing: 4) {
-                Circle().fill(p.accentGreen).frame(width: 6, height: 6)
-                Text(model.headlineStatus)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(p.accentGreen)
-            }
-        }
-        .padding(EdgeInsets(top: 2, leading: 2, bottom: 10, trailing: 2))
-    }
-}
-
-// MARK: - 10 宫格能耗大盘 (metric-grid: 2列 gap10, 卡片 radius16 pad12 minH106, 彩条 3.5px)
+// MARK: - 10 宫格能耗大盘 (动态周期响应引擎：点今日显今日/点本月显本月 + 3.5px 纯色彩条 + 纯净胶囊)
 struct MetricGridView: View {
     @Environment(\.colorScheme) private var scheme
     @EnvironmentObject private var model: DashboardModel
@@ -31,108 +8,109 @@ struct MetricGridView: View {
     private var p: V32Palette { V32Palette(scheme) }
 
     var body: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-            ForEach(0..<10, id: \.self) { idx in
-                MetricCardCell(def: model.metricDefs[idx], value: model.metricValue(at: idx), palette: p)
+        VStack(spacing: 0) {
+            // 响应式 10 宫格：根据当前选区动态派生标题与数值
+            let cards = model.currentActivePeriodInfo.cards
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(0..<cards.count, id: \.self) { idx in
+                    let card = cards[idx]
+                    metricCard(card: card)
+                }
             }
+            .padding(.bottom, 10)
+
+            // 原厂精致科技胶囊 (彻底拔除生硬星号与轮询解释)
+            HStack(spacing: 5) {
+                Circle()
+                    .fill(Color(hex: 0x30D158))
+                    .frame(width: 5, height: 5)
+                Text("五菱云端已同步 · 15分钟级动态刷新")
+                    .font(.system(size: 10.5, weight: .medium))
+                    .foregroundColor(p.textMuted)
+                Spacer()
+                Text(model.currentActivePeriodInfo.subHint)
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundColor(p.accentCyan)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 4)
         }
         .padding(.bottom, 12)
     }
-}
 
-// 单张指标卡 (1:1 v32 metric-card: :active scale 0.98)
-private struct MetricCardCell: View {
-    @Environment(\.colorScheme) private var scheme
-    let def: MetricCardDef
-    let value: String
-    let palette: V32Palette
-
-    var body: some View {
-        Button(action: {}) {
-            cardContent
-        }
-        .buttonStyle(PressScaleStyle(scale: 0.98))
-    }
-
-    private var cardContent: some View {
+    private func metricCard(card: MetricCardData) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // card-top (11px + 14px icon)
-            HStack(spacing: 5) {
-                Image(systemName: def.icon)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(def.colorKey == "blue" ? palette.accentBlue : palette.textSecondary)
-                    .frame(width: 14, height: 14)
-                Text(def.title)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(palette.textSecondary)
-            }
-            .padding(.bottom, 4)
+            // 顶部小标题 (动态前缀，如：9月行驶里程、8月充入电量、2026出行次数)
+            Text(card.label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(p.textMuted)
+                .lineLimit(1)
+                .padding(.bottom, 6)
 
             Spacer(minLength: 0)
 
-            // card-mid (24px/700 + 10px unit)
-            HStack(alignment: .lastTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold))
-                    .kerning(-0.5)
-                    .foregroundColor(palette.textPrimary)
+            // 主数值与单位 (大字 22pt + 右下基线对齐单位)
+            HStack(alignment: .lastTextBaseline, spacing: 3) {
+                Text(card.value)
+                    .font(.system(size: 21, weight: .bold, design: .rounded))
+                    .foregroundColor(p.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.55)
-                Text(def.unit)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(palette.textMuted)
+                    .minimumScaleFactor(0.7)
+                Text(card.unit)
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundColor(barColor(card.accent))
+                    .lineLimit(1)
             }
+            .padding(.bottom, 4)
 
-            // card-sub-stacked (9/10px + badge)
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(def.subT)
-                        .font(.system(size: 9))
-                        .foregroundColor(palette.textMuted)
-                    Text(def.subV)
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(palette.textSecondary)
+            // 辅助说明行 (无生硬星号，纯净展示)
+            HStack(spacing: 4) {
+                if let sub = card.subUnit, !sub.isEmpty {
+                    Text(sub)
+                        .font(.system(size: 9.5, weight: .medium))
+                        .foregroundColor(p.textMuted)
+                        .lineLimit(1)
                 }
-                Spacer(minLength: 0)
-                Text(def.badge)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(palette.textSecondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 1)
-                    .background(Capsule().fill(palette.badgeBG))
+                Spacer()
+                if let delta = card.delta, !delta.isEmpty {
+                    Text(delta)
+                        .font(.system(size: 9.5, weight: .semibold))
+                        .foregroundColor(p.accentGreen)
+                        .lineLimit(1)
+                }
             }
-            .padding(.top, 4)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, minHeight: 106, alignment: .leading)
+        .padding(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 10))
+        .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(palette.cardBG)
-                .shadow(color: palette.cardShadow, radius: 8, x: 0, y: 4)
+                .fill(p.cardBG)
+                .shadow(color: p.cardShadow, radius: 4, x: 0, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(palette.cardBorder, lineWidth: 1)
+                .strokeBorder(p.cardBorder, lineWidth: 1)
         )
-        // 3.5px 左侧纯色彩条 (1:1 ::before)
+        // 左侧 3.5px 纯色彩条
         .overlay(alignment: .leading) {
-            Rectangle()
-                .fill(accentColor)
+            RoundedRectangle(cornerRadius: 2)
+                .fill(barColor(card.accent))
                 .frame(width: 3.5)
+                .padding(.vertical, 8)
+                .padding(.leading, 3)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    private var accentColor: Color {
-        switch def.colorKey {
-        case "yellow": return palette.accentYellow
-        case "green": return palette.accentGreen
-        case "cyan": return palette.accentCyan
-        case "purple": return palette.accentPurple
-        case "blue": return palette.accentBlue
-        case "orange": return palette.accentOrange
-        case "red": return palette.accentRed
-        default: return palette.accentCyan
+    private func barColor(_ key: String) -> Color {
+        switch key {
+        case "cyan": return p.accentCyan
+        case "green": return p.accentGreen
+        case "blue": return p.accentBlue
+        case "yellow": return p.accentYellow
+        case "red": return p.accentRed
+        case "purple": return p.accentPurple
+        default: return p.accentCyan
         }
     }
 }

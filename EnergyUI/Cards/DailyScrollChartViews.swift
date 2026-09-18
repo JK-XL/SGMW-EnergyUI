@@ -100,13 +100,18 @@ struct ChartCardView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("2026 出行次数月度分布")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(p.textPrimary)
+                HStack(spacing: 5) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(p.accentCyan)
+                    Text("2026 出行次数月度分布")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(p.textPrimary)
+                }
                 Spacer()
                 Text(model.chartSubHint)
-                    .font(.system(size: 10, weight: model.selectedChartMonth != nil ? .bold : .regular))
-                    .foregroundColor(model.selectedChartMonth != nil ? p.accentBlue : p.textMuted)
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundColor(model.selectedChartMonth != nil ? p.accentGreen : p.accentCyan)
             }
             .padding(.bottom, 12)
 
