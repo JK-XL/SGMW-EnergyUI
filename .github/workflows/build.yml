@@ -18,8 +18,16 @@ jobs:
       - name: Generate Xcode project
         run: |
           xcodegen generate
-          echo "=== objectVersion check ==="
+          echo "=== objectVersion check (before) ==="
           grep -m1 "objectVersion" EnergyUI.xcodeproj/project.pbxproj || true
+          # Xcode 15.4 不支持 objectVersion 77，确定性降级为 60
+          if grep -q "PBXFileSystemSynchronizedRootGroup" EnergyUI.xcodeproj/project.pbxproj; then
+            echo "ERROR: project contains Xcode16-only synchronized groups; cannot downgrade"
+            exit 1
+          fi
+          sed -i '' 's/objectVersion = 77;/objectVersion = 60;/' EnergyUI.xcodeproj/project.pbxproj
+          echo "=== objectVersion check (after) ==="
+          grep -m1 "objectVersion" EnergyUI.xcodeproj/project.pbxproj
 
       - name: Build (unsigned, generic iOS device)
         run: |
